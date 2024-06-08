@@ -1,0 +1,434 @@
+Flask
+pymongo
+
+
+from flask import Flask,redirect,render_template,request,url_for
+import pymongo
+
+
+# Establish connection to MongoDB running locally
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+
+app=Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/signup')
+def signup():
+    return render_template('signup.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+if __name__ == '__main__':
+    app.run(debug=True) 
+
+
+
+# old python 
+
+from flask import Flask, jsonify, request, render_template
+from pymongo import MongoClient
+
+app = Flask(__name__)
+
+# Connect to MongoDB
+client = MongoClient('mongodb://localhost:27017/')
+db = client['bus_tracking_db']
+
+# Routes collection
+routes_collection = db['routes']
+
+# Bus Stops collection
+bus_stops_collection = db['bus_stops']
+
+# Buses collection
+buses_collection = db['buses']
+
+# Define Flask routes
+
+# Route to fetch bus stops based on user input
+@app.route('/get_bus_stops', methods=['POST'])
+def get_bus_stops():
+    # Get user input
+    query = request.json['query']
+    # Query MongoDB for bus stops matching the input
+    matching_bus_stops = bus_stops_collection.find({"name": {"$regex": query, "$options": "i"}})
+    # Extract bus stop names
+    bus_stop_names = [bus_stop['name'] for bus_stop in matching_bus_stops]
+    return jsonify(bus_stop_names)
+
+# Route to select route based on selected bus stops
+@app.route('/select_route', methods=['POST'])
+def select_route():
+    # Get selected bus stops
+    starting_bus_stop = request.json['starting_bus_stop']
+    destination_bus_stop = request.json['destination_bus_stop']
+    # Query MongoDB to find the route that includes both starting and destination bus stops
+    route = routes_collection.find_one({"bus_stops": {"$all": [starting_bus_stop, destination_bus_stop]}})
+    return jsonify(route)
+
+# Route to render HTML page for bus stop selection
+@app.route('/')
+def index():
+    return render_template('bus_selection.html')
+
+# Route to render HTML page for map and route display
+@app.route('/map')
+def show_map():
+    return render_template('map.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+# old html 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Stop Selection</title>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #6d4c41;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        label {
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="submit"] {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            background-color: #6d4c41;
+            color: #fff;
+            cursor: pointer;
+        }
+        #map {
+            height: 400px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bus Stop Selection</h1>
+        <form id="busStopForm">
+            <label for="startingBusStop">Starting Bus Stop:</label>
+            <input type="text" id="startingBusStop" name="startingBusStop">
+            <label for="destinationBusStop">Destination Bus Stop:</label>
+            <input type="text" id="destinationBusStop" name="destinationBusStop">
+            <input type="submit" value="Submit">
+        </form>
+        <div id="map"></div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=geometry"></script>
+    <script>
+        $(document).ready(function() {
+            var map;
+            var routePath;
+            var busMarker;
+
+            // Initialize Google Map
+            function initMap() {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 37.7749, lng: -122.4194 },
+                    zoom: 12
+                });
+            }
+
+            // Function to initialize Autocomplete for input fields
+            function initializeAutocomplete(inputId) {
+                $('#' + inputId).autocomplete({
+                    source: function(request, response) {
+                        $.ajax({
+                            url: '/get_bus_stops',
+                            method: 'POST',
+                            dataType: 'json',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ query: request.term }),
+                            success: function(data) {
+                                response(data);
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Error fetching bus stops:', error);
+                            }
+                        });
+                    },
+                    minLength: 2 // Minimum characters before triggering autocomplete
+                });
+            }
+
+            // Initialize Autocomplete for input fields
+            initializeAutocomplete('startingBusStop');
+            initializeAutocomplete('destinationBusStop');
+
+            // Handle form submission
+            $('#busStopForm').submit(function(event) {
+                event.preventDefault();
+                var startingBusStop = $('#startingBusStop').val();
+                var destinationBusStop = $('#destinationBusStop').val();
+
+                // Select route based on selected bus stops
+                $.ajax({
+                    type: 'POST',
+                    url: '/select_route',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ starting_bus_stop: startingBusStop, destination_bus_stop: destinationBusStop }),
+                    success: function(response) {
+                        // Process selected route
+                        console.log('Selected route:', response);
+
+                        // Clear previous route and marker
+                        if (routePath) routePath.setMap(null);
+                        if (busMarker) busMarker.setMap(null);
+
+                        // Draw route on the map
+                        var routeCoordinates = response.coordinates.map(function(coord) {
+                            return { lat: coord.latitude, lng: coord.longitude };
+                        });
+                        routePath = new google.maps.Polyline({
+                            path: routeCoordinates,
+                            geodesic: true,
+                            strokeColor: '#6d4c41',
+                            strokeOpacity: 1.0,
+                            strokeWeight: 2
+                        });
+                        routePath.setMap(map);
+
+                        // Set bus marker at starting bus stop
+                        var startingBusStopCoords = routeCoordinates[0];
+                        busMarker = new google.maps.Marker({
+                            position: startingBusStopCoords,
+                            map: map,
+                            title: 'Bus',
+                            icon: {
+                                url: 'https://maps.google.com/mapfiles/ms/micons/bus.png',
+                                scaledSize: new google.maps.Size(32, 32)
+                            }
+                        });
+
+                        // Update bus marker position in real-time
+                        setInterval(function() {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/update_coordinates',
+                                contentType: 'application/json',
+                                data: JSON.stringify({
+                                    latitude: startingBusStopCoords.lat,
+                                    longitude: startingBusStopCoords.lng
+                                }),
+                                success: function(response) {
+                                    console.log('Coordinates updated:', response);
+                                },
+                                error: function(xhr, status, error) {
+                                    console.error('Error updating coordinates:', error);
+                                }
+                            });
+                        }, 5000); // Update every 5 seconds
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error selecting route:', error);
+                    }
+                });
+            });
+
+            // Initialize Google Map when document is ready
+            initMap();
+        });
+    </script>
+</body>
+</html>
+
+
+before hack
+
+from flask import Flask, jsonify, request, render_template
+from pymongo import MongoClient
+
+app = Flask(__name__)
+
+# Connect to MongoDB
+client = MongoClient('mongodb://localhost:27017/')
+db = client['bus_tracking_db']
+
+# Routes collection
+routes_collection = db['routes']
+
+# Bus Stops collection
+bus_stops_collection = db['bus_stops']
+
+# Buses collection
+buses_collection = db['buses']
+
+# Define Flask routes
+
+# Route to fetch bus stops based on user input
+@app.route('/get_bus_stops', methods=['POST'])
+def get_bus_stops():
+    # Get user input
+    query = request.json['query']
+    # Query MongoDB for bus stops matching the input
+    matching_bus_stops = bus_stops_collection.find({"name": {"$regex": query, "$options": "i"}})
+    # Extract bus stop names
+    bus_stop_names = [bus_stop['name'] for bus_stop in matching_bus_stops]
+    return jsonify(bus_stop_names)
+
+# Route to fetch available buses for the selected route
+# Route to fetch available buses for the selected route
+# Route to fetch available buses for the selected route
+@app.route('/get_available_buses', methods=['POST'])
+def get_available_buses():
+    starting_bus_stop = request.json['starting_bus_stop']
+    destination_bus_stop = request.json['destination_bus_stop']
+    
+    # Query MongoDB to find routes that include the starting and destination bus stops
+    matching_routes = routes_collection.find({"bus_stops": {"$all": [starting_bus_stop, destination_bus_stop]}})
+    
+    available_buses = []
+    for route in matching_routes:
+        # Get the index of the starting and destination bus stops in the route
+        starting_index = route['bus_stops'].index(starting_bus_stop)
+        destination_index = route['bus_stops'].index(destination_bus_stop)
+        
+        # Check if the starting bus stop comes before the destination bus stop in the route
+        if starting_index < destination_index:
+            # Fetch buses running on the matching route
+            buses_on_route = list(buses_collection.find({"route_id": route['_id']}))
+            for bus in buses_on_route:
+                # Ensure 'dispatch_time' field is present and not empty in the bus document
+                if 'dispatch_time' in bus and bus['dispatch_time']:
+                    available_buses.append({'id': str(bus['_id']), 'name': bus['name'], 'dispatch_time': bus['dispatch_time']})
+                else:
+                    available_buses.append({'id': str(bus['_id']), 'name': bus['name']})
+                    
+
+    if available_buses:
+        # If buses are found, return their details
+        return jsonify(available_buses)
+    else:
+        # If no buses are found, return a message
+        return jsonify({'message': 'No buses available on this route'})
+
+
+# Route to render HTML page for bus stop selection
+@app.route('/')
+def index():
+    return render_template('bus_selection.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+$(document).ready(function() {
+    // Initialize Autocomplete for input fields
+    $('#startingBusStop, #destinationBusStop').autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: '/get_bus_stops',
+                method: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({ query: request.term }),
+                success: function(data) {
+                    response(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching bus stops:', error);
+                }
+            });
+        },
+        minLength: 2// Minimum characters before triggering autocomplete
+    });
+
+    // Handle form submission
+    $('#busStopForm').submit(function(event) {
+        event.preventDefault();
+        var startingBusStop = $('#startingBusStop').val();
+        var destinationBusStop = $('#destinationBusStop').val();
+
+        if (!startingBusStop || !destinationBusStop) {
+            // Display message if input fields are empty
+            $('#busList').empty();
+            $('#noBusesMessage').show().text('Please enter both starting and destination bus stops');
+            return;
+        }
+
+        // Fetch buses available on the selected route
+        $.ajax({
+            type: 'POST',
+            url: '/get_available_buses',
+            contentType: 'application/json',
+            data: JSON.stringify({ starting_bus_stop: startingBusStop, destination_bus_stop: destinationBusStop }),
+            success: function(response) {
+                // Clear previous bus list
+                $('#busList').empty();
+                
+                if (response.buses.length > 0) {
+                    // Populate bus list with available buses
+                    response.buses.forEach(function(bus) {
+                        $('#busList').append('<li class="busItem" data-bus-id="' + bus.id + '" data-route-coordinates="' + JSON.stringify(response.route_coordinates) + '">' + `<h4>${bus.name}</h4>` + '          Dispatch Time : ' + bus.dispatch_time +'       ---      type : '+bus.type+'</li>');
+                    });
+                    
+                    // Hide error message if buses are available
+                    $('#noBusesMessage').hide();
+                } else {
+                    // If no buses available, display a message
+                    $('#noBusesMessage').show().text('No buses available on this route');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching available buses:', error);
+            }
+        });
+    });
+
+    // Redirect to map page when clicking on a bus
+    $(document).on('click', '.busItem', function() {
+        var busId = $(this).data('bus-id');
+        var routeCoordinates = $(this).data('route-coordinates');
+        window.location.href = '/map?busId=' + busId + '&routeCoordinates=' + routeCoordinates;
+    });
+});
+
+    </script>

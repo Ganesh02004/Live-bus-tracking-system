@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bus Selection</title>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+      background-color: #6D4C41; /* Dark brown header background */
+      color: #fff; /* White header text color */
+      padding: 20px 0;
+      text-align: center;
+    }
+        nav {
+            background-color: #8D6E63; /* Brown navigation background */
+            padding: 10px 0;
+            text-align: center;
+            display: flex; /* Make the nav items flex containers */
+            justify-content: space-between; /* Space items evenly */
+        }
+        .nav-left,
+        .nav-right {
+            display: flex; /* Align items horizontally */
+        }
+        nav a {
+            color: #fff; /* White navigation text color */
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            transition: background-color 0.3s ease; /* Smooth hover effect */
+        }
+        nav a:hover {
+            background-color: #A1887F; /* Dark brown on hover */
+        }
+        .logout-button {
+            background-color: #6d4c41;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px; /* Add margin to separate from other nav items */
+            transition: background-color 0.3s;
+        }
+        .logout-button:hover {
+            background-color: #50372e;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        label {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        input[type="text"], input[type="submit"] {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-size: 18px;
+            width: 300px;
+            text-align: center;
+        }
+        input[type="submit"] {
+            background-color: #6d4c41;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: #50372e;
+        }
+        #busList {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .busItem {
+            background-color: #e0e0e0;
+            padding: 20px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .busItem:hover {
+            background-color: #ccc;
+        }
+        .message {
+            font-weight: bold;
+            text-align: center;
+            color: #6d4c41;
+            margin-top: 20px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NEURON</h1>
+    </header>
+    <nav>
+        <div class="nav-left">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+        </div>
+        <div class="nav-right">
+            <a class="logout-button" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Bus Selection</h1>
+        <form id="busStopForm">
+            <label for="startingBusStop">Starting Bus Stop:</label>
+            <input type="text" id="startingBusStop" name="startingBusStop" placeholder="Enter starting bus stop">
+            <label for="destinationBusStop">Destination Bus Stop:</label>
+            <input type="text" id="destinationBusStop" name="destinationBusStop" placeholder="Enter destination bus stop">
+            <input type="submit" value="Find Buses">
+        </form>
+        <ul id="busList"></ul>
+        <p class="message" id="noBusesMessage" style="display: none;">No buses available on this route</p>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function() {
+    // Initialize Autocomplete for input fields
+    $('#startingBusStop, #destinationBusStop').autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: '/get_bus_stops',
+                method: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({ query: request.term }),
+                success: function(data) {
+                    response(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching bus stops:', error);
+                }
+            });
+        },
+        minLength: 2 // Minimum characters before triggering autocomplete
+    });
+
+    // Handle form submission
+    $('#busStopForm').submit(function(event) {
+        event.preventDefault();
+        var startingBusStop = $('#startingBusStop').val();
+        var destinationBusStop = $('#destinationBusStop').val();
+
+        if (!startingBusStop || !destinationBusStop) {
+            // Display message if input fields are empty
+            $('#busList').empty();
+            $('#noBusesMessage').show().text('Please enter both starting and destination bus stops');
+            return;
+        }
+
+        // Fetch buses available on the selected route
+        $.ajax({
+            type: 'POST',
+            url: '/get_available_buses',
+            contentType: 'application/json',
+            data: JSON.stringify({ starting_bus_stop: startingBusStop, destination_bus_stop: destinationBusStop }),
+            success: function(response) {
+                // Clear previous bus list
+                $('#busList').empty();
+                
+                if (response.buses.length > 0) {
+                    // Populate bus list with available buses
+                    response.buses.forEach(function(bus) {
+                        $('#busList').append('<li class="busItem" data-bus-name="' + bus.name + '">' + 
+                                             '<h4>' + bus.name + '</h4>' + 
+                                             ' Dispatch Time: ' + bus.dispatch_time + ' --- Type: ' + bus.type + '</li>');
+                    });
+                    
+                    // Hide error message if buses are available
+                    $('#noBusesMessage').hide();
+                } else {
+                    // If no buses available, display a message
+                    $('#noBusesMessage').show().text('No buses available on this route');
+                }
+            }, 
+            error: function(xhr, status, error) {
+                console.error('Error fetching available buses:', error);
+            }
+        });
+    });
+
+    // Redirect to map page when clicking on a bus
+    $(document).on('click', '.busItem', function() {
+        var busName = $(this).data('bus-name');
+
+        $.ajax({
+            type: 'POST', 
+            url: '/map',
+            contentType: 'application/json',
+            data: JSON.stringify({ busName: busName }),
+            success: function() {
+                window.location.href = '/map?busName=' + encodeURIComponent(busName);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error sending bus name:', error);
+            }
+        });
+    });
+});
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Tracking System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #F5E6CA; /* Light brown background */
+            color: #4E342E; /* Brown text color */
+        }
+        header {
+            background-color: #6D4C41; /* Dark brown header background */
+            color: #fff; /* White header text color */
+            padding: 20px 0;
+            text-align: center;
+        }
+        nav {
+            background-color: #8D6E63; /* Brown navigation background */
+            padding: 10px 0;
+            text-align: center;
+            display: flex; /* Make the nav items flex containers */
+            justify-content: center; /* Center the items horizontally */
+        }
+        .nav-left,
+        .nav-right {
+            display: flex; /* Align items horizontally */
+        }
+        nav a {
+            color: #fff; /* White navigation text color */
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            transition: background-color 0.3s ease; /* Smooth hover effect */
+        }
+        nav a:hover {
+            background-color: #A1887F; /* Dark brown on hover */
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto; /* Center the container horizontally */
+            display: flex; /* Align items horizontally */
+            justify-content: space-between; /* Spread items evenly */
+            align-items: center; /* Center items vertically */
+            flex-wrap: wrap; /* Allow items to wrap */
+        }
+        .description {
+            flex-basis: 100%; /* Take 48% of the width */
+            margin-top: 20px; /* Add margin */
+            text-align: center; /* Center text */
+        }
+        h2 {
+            margin-top: 20px; /* Add margin for heading */
+        }
+        p {
+            line-height: 1.6;
+        }
+        .image {
+            margin-bottom: 20px; /* Add margin between images */
+            text-align: center; /* Center images */
+            flex-basis: 30%; /* Take 30% of the width */
+        }
+        .image img {
+            max-height: 300px; /* Adjust maximum height */
+            width: auto; /* Auto-adjust width */
+            display: inline-block; /* Ensure images are centered */
+            margin: 0 10px; /* Add margin around images */
+            border-radius: 8px; /* Add round borders to images */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NEURO</h1>
+    </header>
+    <nav>
+        <div class="nav-left">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('signup') }}">Signup</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+            
+        </div>
+    </nav>
+    <div class="container">
+        <div class="description">
+            <div class="image">
+            <img src="/static/Images/pexels-burak-the-weekender-45072.jpg" alt="Vision">
+            </div>
+            <h2>Our Vision</h2>
+            <p>Our vision is to transform the landscape of public transportation by pioneering a comprehensive and user-centric approach to bus travel. We envision a future where every bus user, from students to daily commuters, can seamlessly navigate their journeys with ease and confidence.</p>
+        </div>
+        <div class="description">
+            <div class="image">
+                <img src="/static/Images/clark-tibbs-oqStl2L5oxI-unsplash.jpg" alt="Mission">
+            </div>
+            <h2>Our Mission</h2>
+            <p>Our mission is to provide real-time updates on bus locations and arrival times, making it easier for people to plan their trips. Whether it's catching the school bus or using public transport, students can check where the buses are and when they reach their stop.</p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="description">
+            <h2><b>Transforming Public Transportation through Real-Time Vehicle Tracking</b></h2>
+            <p>
+                "Our vehicle tracking system revolutionizes the way people experience public transportation by providing real-time updates on bus locations and arrival times. Through cutting-edge GPS technology and user-friendly interfaces, we empower commuters to plan their journeys with precision and confidence. Whether it's ensuring timely arrival for students catching the school bus or optimizing routes for daily commuters, our system offers unparalleled convenience. Additionally, our platform promotes sustainability by indicating buses running on eco-friendly fuels, contributing to a cleaner environment. By simplifying the complexities of bus travel, we strive to make commuting smoother, more efficient, and ultimately, more enjoyable for everyone."</p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="image">
+            <img src="/static/Images/keiron-crasktellanos-UH0vzjrG78M-unsplash.jpg" alt="Traffic Constable">
+            <h3>Traffic Constable</h3>
+            <p>Real-time bus location data helps traffic constables efficiently manage traffic flow.</p>
+        </div>
+        <div class="image">
+            <img src="/static/Images/student.jpg" alt="Students">
+            <h3>Students</h3>
+            <p>Students can ensure punctual arrival of school buses with real-time bus location updates.</p>
+        </div>
+        <div class="image">
+            <img src="/static/Images/travel.jpg" alt="Travelers/Users">
+            <h3>Travelers/Users</h3>
+            <p>Travelers/Users can conveniently plan their journeys with real-time bus location and arrival time information.</p>
+        </div>
+    </div>
+</body>
+</html>

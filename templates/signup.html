@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Up Form</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #F5E6CA; /* Light brown background */
+      color: #4E342E; /* Brown text color */
+    }
+    header {
+      background-color: #6D4C41; /* Dark brown header background */
+      color: #fff; /* White header text color */
+      padding: 20px 0;
+      text-align: center;
+    }
+    nav {
+      background-color: #8D6E63; /* Brown navigation background */
+      padding: 10px 0;
+      text-align: center;
+      display: flex; /* Make the nav items flex containers */
+      justify-content: center; /* Center items horizontally */
+    }
+    .nav-left,
+    .nav-right {
+      display: flex; /* Align items horizontally */
+    }
+    nav a {
+      color: #fff; /* White navigation text color */
+      text-decoration: none;
+      padding: 10px 20px;
+      margin: 0 10px;
+      transition: background-color 0.3s ease; /* Smooth hover effect */
+    }
+    nav a:hover {
+      background-color: #A1887F; /* Dark brown on hover */
+    }
+    .signup-form {
+      width: 300px;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      margin: 20px auto; /* Center the form horizontally */
+    }
+    .signup-form h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .signup-form label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .signup-form input[type="text"],
+    .signup-form input[type="email"],
+    .signup-form input[type="password"] {
+      border: 1px solid #ccc; /* Add border to input fields */
+      background-color: #f9f9f9; /* Light gray background */
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      width: 100%; /* Full width */
+      box-sizing: border-box; /* Include padding and border in width calculation */
+    }
+    .signup-form input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .signup-form input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+    .signup-form p {
+      margin-top: 16px;
+      text-align: center;
+    }
+    .signup-form p a {
+      text-decoration: none;
+      color: #4CAF50;
+    }
+    .signup-form p a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script>
+    function validatePassword() {
+      var password = document.getElementById("password").value;
+      var errorMessage = document.getElementById("passwordError");
+      var specialChars = /[!@#$%^&*(),.?":{}|<>]/g;
+      var numbers = /\d/g;
+      var upperCaseLetters = /[A-Z]/g;
+
+      if (!specialChars.test(password) || !numbers.test(password) || !upperCaseLetters.test(password)) {
+        errorMessage.innerText = "Password must contain at least one special character, one number, and one uppercase letter.";
+        return false;
+      } else {
+        errorMessage.innerText = "";
+      }
+
+      return true;
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>NEURO</h1>
+  </header>
+  <nav>
+      <div class="nav-left">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('signup') }}">Signup</a>  
+      </div>
+      <div class="nav-right">
+        <a href="{{ url_for('contact') }}">Contact</a>
+      </div>
+  </nav>
+  <div class="signup-form">
+    <h2>Sign Up Form</h2>
+    <form method="post" onsubmit="return validatePassword()">
+      <label for="username">User name:</label>
+      <input type="text" id="username" name="username">
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email">
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password">
+      <span id="passwordError" style="color: red;"></span> <!-- Error message container -->
+
+      <label for="confirm_password">Confirm Password:</label>
+      <input type="password" id="confirm_password" name="confirm_password">
+
+      <input type="submit" value="SIGN UP">
+    </form>
+    <p><a href="{{ url_for('login') }}">Login</a> if you already have an account.</p>
+  </div>
+</body>
+</html>

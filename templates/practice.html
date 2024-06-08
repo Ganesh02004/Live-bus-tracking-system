@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Route with Bus Stops</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        .marker {
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/05/Bus_stop_symbol.svg');
+            background-size: cover;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .marker-popup {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hhaWtpc2FhcSIsImEiOiJjbHN5cGp0emkwNXY5MmtucmR4Mmw1YnhhIn0.j_GkyRexLOE1wqUgnDleOg';
+
+    var coordinates = [
+        { name: 'Starting Point', coord: [76.8957997385223, 15.15124886195894] },    // Starting point
+        { name: 'Bus Stop 1', coord: [76.85100947456455, 15.169396201006808] },      // Bus Stop 1
+        { name: 'Bus Stop 2', coord: [76.8943161531881, 15.144667428628223] },       // Bus Stop 2
+        { name: 'Bus Stop 3', coord: [76.895820929911, 15.142322490753031] },        // Bus Stop 3
+        { name: 'Destination', coord: [76.89695001384395, 15.141545328080033] }      // Destination
+    ];
+
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: coordinates[0].coord, // Starting point
+        zoom: 12
+    });
+
+    // Add markers for all coordinates
+    coordinates.forEach(function(coord) {
+        var el = document.createElement('div');
+        el.className = 'marker';
+
+        var marker = new mapboxgl.Marker(el)
+            .setLngLat(coord.coord)
+            .addTo(map);
+
+        // Add popup for all coordinates
+        var popup = new mapboxgl.Popup({
+            offset: 25
+        }).setText(coord.name);
+
+        marker.setPopup(popup);
+    });
+
+    // Fetch route from Mapbox Directions API
+    var directionsRequest = 'https://api.mapbox.com/directions/v5/mapbox/driving/';
+    coordinates.forEach(function(coord) {
+        directionsRequest += coord.coord[0] + ',' + coord.coord[1] + ';';
+    });
+    directionsRequest = directionsRequest.slice(0, -1); // Remove the trailing semicolon
+    directionsRequest += '?geometries=geojson&access_token=' + mapboxgl.accessToken;
+
+    fetch(directionsRequest)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            var route = data.routes[0].geometry;
+            map.addLayer({
+                'id': 'route',
+                'type': 'line',
+                'source': {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'Feature',
+                        'properties': {},
+                        'geometry': route
+                    }
+                },
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#3887be',
+                    'line-width': 8
+                }
+            });
+        });
+
+</script>
+
+</body>
+</html>

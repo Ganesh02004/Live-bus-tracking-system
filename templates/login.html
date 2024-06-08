@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login Form</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #F5E6CA; /* Light brown background */
+      color: #4E342E; /* Brown text color */
+    }
+    header {
+      background-color: #6D4C41; /* Dark brown header background */
+      color: #fff; /* White header text color */
+      padding: 20px 0;
+      text-align: center;
+    }
+    nav {
+      background-color: #8D6E63; /* Brown navigation background */
+      padding: 10px 0;
+      text-align: center;
+      display: flex; /* Make the nav items flex containers */
+      justify-content: center; /* Center items horizontally */
+    }
+    .nav-left,
+    .nav-right {
+      display: flex; /* Align items horizontally */
+    }
+    nav a {
+      color: #fff; /* White navigation text color */
+      text-decoration: none;
+      padding: 10px 20px;
+      margin: 0 10px;
+      transition: background-color 0.3s ease; /* Smooth hover effect */
+    }
+    nav a:hover {
+      background-color: #A1887F; /* Dark brown on hover */
+    }
+    .login-form {
+      width: 300px;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 40px;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      margin: 20px auto; /* Center the form horizontally */
+    }
+    .login-form h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .login-form label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .login-form input[type="text"],
+    .login-form input[type="password"] {
+      border: none;
+      background-color: #f2f2f2;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      width: 100%; /* Set input fields to full width */
+    }
+    .login-form input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%; /* Set button to full width */
+    }
+    .login-form input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+    .login-form input[type="submit"].blocked {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .login-form p {
+      margin-top: 16px;
+      text-align: center;
+    }
+    .login-form p a {
+      text-decoration: none;
+      color: #4CAF50;
+    }
+    .login-form p a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NEURO</h1>
+  </header>
+  <nav>
+      <div class="nav-left">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('signup') }}">Signup</a>
+      </div>
+      <div class="nav-right">
+        <a href="{{ url_for('contact') }}">Contact</a>
+      </div>
+  </nav>
+  <div class="login-form">
+    <h2>Login Form</h2>
+    <form id="loginForm" method="post" onsubmit="return attemptLogin()">
+      <label for="username">User name:</label>
+      <input type="text" id="username" name="username">
+  
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password">
+  
+      <input type="submit" value="LOGIN" id="loginButton">
+      <p id="timer" style="color: red;"></p> <!-- Timer display -->
+      {% if error_message %}
+      <p style="color: red;">{{ error_message }}</p>
+      {% endif %}
+    </form>
+    <p><a href="{{ url_for('signup') }}">Signup</a></p>
+  </div>
+  <script>
+    var loginAttempts = 0;
+    var timerInterval;
+
+    function attemptLogin() {
+      loginAttempts++;
+
+      if (loginAttempts >= 3) {
+        var loginButton = document.getElementById("loginButton");
+        loginButton.disabled = true; // Disable the submit button
+        loginButton.classList.add("blocked"); // Change button color
+        var timerDisplay = document.getElementById("timer");
+        timerDisplay.innerText = "10";
+        timerInterval = setInterval(updateTimer, 1000);
+        setTimeout(resetLoginAttempts, 10000); // Unblock login after 10 seconds
+        return false; // Prevent form submission
+      }
+    }
+
+    function updateTimer() {
+      var timerDisplay = document.getElementById("timer");
+      var timeLeft = parseInt(timerDisplay.innerText);
+      if (timeLeft > 0) {
+        timeLeft--;
+        timerDisplay.innerText = timeLeft.toString();
+      } else {
+        clearInterval(timerInterval);
+        timerDisplay.innerText = "";
+      }
+    }
+
+    // Call updateTimer initially to start the countdown
+    updateTimer();
+
+    function resetLoginAttempts() {
+      loginAttempts = 0;
+      clearInterval(timerInterval);
+      var loginButton = document.getElementById("loginButton");
+      loginButton.disabled = false; // Enable the submit button
+      loginButton.classList.remove("blocked"); // Reset button color
+      var timerDisplay = document.getElementById("timer");
+      timerDisplay.innerText = "";
+    }
+  </script>
+</body>
+</html>

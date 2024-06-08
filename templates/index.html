@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bus Route Map</title>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=console.debug&libraries=maps,marker&v=beta"></script>
+    <script>
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: 37.7749, lng: -122.4194},
+                zoom: 12
+            });
+
+            // Display bus route using polyline
+            var routeCoordinates = [
+                {lat: 37.7749, lng: -122.4194}, // Example coordinates, replace with actual data
+                // Add more coordinates for the bus route
+            ];
+            var routePath = new google.maps.Polyline({
+                path: routeCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+            routePath.setMap(map);
+
+            // Display bus stop markers
+            var busStops = [
+                {lat: 37.7749, lng: -122.4194}, // Example coordinates, replace with actual data
+                // Add more coordinates for bus stops
+            ];
+            for (var i = 0; i < busStops.length; i++) {
+                new google.maps.Marker({
+                    position: busStops[i],
+                    map: map,
+                    title: 'Bus Stop ' + (i + 1)
+                });
+            }
+
+            // Simulate GPS tracker movement
+            var trackerMarker = new google.maps.Marker({
+                position: routeCoordinates[0], // Start position
+                map: map,
+                icon: {
+                    url: 'http://maps.google.com/mapfiles/kml/paddle/grn-blank.png', // Custom marker icon
+                    scaledSize: new google.maps.Size(32, 32)
+                }
+            });
+            var index = 0;
+            setInterval(function() {
+                index = (index + 1) % routeCoordinates.length;
+                trackerMarker.setPosition(routeCoordinates[index]);
+            }, 1000); // Update position every 1 second (simulated movement)
+        }
+    </script>
+    
+    
+</head>
+<body onload="initMap()">
+    <div id="map" style="height: 400px;"></div>
+</body>
+</html>

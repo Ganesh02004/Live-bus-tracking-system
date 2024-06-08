@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Route Highlighting</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        #loading {
+            font-size: 24px;
+            color: #333;
+        }
+        .marker {
+            width: 32px;
+            height: 32px;
+            background-image: url('/static/Images/shadow.png'); /* Replace with your marker icon */
+            background-size: cover;
+            cursor: pointer;
+        }
+        .marker-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+    color: #090909;
+    pointer-events: none;
+    padding: 4px; /* Add padding to the text */
+    font-family: 'Arial', sans-serif; /* Change the font */
+    text-shadow: -1px -1px 0 #fff,  
+                  1px -1px 0 #fff,
+                  -1px 1px 0 #fff,
+                  1px 1px 0 #fff; /* Add text shadow for text border */
+}
+
+    </style>
+</head>
+<body>
+
+<div id="loading">Loading map data...</div>
+<div id="map"></div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hhaWtpc2FhcSIsImEiOiJjbHN5cGp0emkwNXY5MmtucmR4Mmw1YnhhIn0.j_GkyRexLOE1wqUgnDleOg';
+
+    async function fetchData() {
+        try {
+            const response = await fetch('/static/bus_stops.json');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching bus stops list:', error);
+            return null;
+        }
+    }
+
+    async function initializeMap() {
+        const data = await fetchData();
+        if (!data) {
+            document.getElementById('loading').textContent = 'Error loading data';
+            return;
+        }
+
+        const coordinates = data.map(stop => [stop.coordinates[1], stop.coordinates[0]]);
+        const names = data.map(stop => stop.name);
+        console.log('Bus names:', names);
+        console.log('Bus stops coordinates:', coordinates);
+
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: coordinates[0], // Starting point
+            zoom: 12
+        });
+
+        // Add markers with labels for each bus stop
+        coordinates.forEach((coord, index) => {
+            const markerElement = document.createElement('div');
+            markerElement.className = 'marker';
+            markerElement.innerHTML = `<div class="marker-label">${names[index]}</div>`;
+
+            new mapboxgl.Marker(markerElement)
+                .setLngLat(coord)
+                .addTo(map);
+        });
+
+        map.on('load', function() {
+            var directionsRequest = 'https://api.mapbox.com/directions/v5/mapbox/driving/';
+            coordinates.forEach(function(coord, index) {
+                directionsRequest += coord[0] + ',' + coord[1];
+                if (index !== coordinates.length - 1) {
+                    directionsRequest += ';';
+                }
+            });
+            directionsRequest += '?geometries=geojson&access_token=' + mapboxgl.accessToken;
+
+            fetch(directionsRequest)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    var route = data.routes[0].geometry;
+                    map.addLayer({
+                        'id': 'route',
+                        'type': 'line',
+                        'source': {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'Feature',
+                                'properties': {},
+                                'geometry': route
+                            }
+                        },
+                        'layout': {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        'paint': {
+                            'line-color': '#3887be',
+                            'line-width': 8
+                        }
+                    });
+
+                    // Hide loading message and show the map
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('map').style.display = 'block';
+                })
+                .catch(function(error) {
+                    console.error('Error fetching route:', error);
+                    document.getElementById('loading').textContent = 'Error loading route';
+                });
+        });
+    }
+
+    // Initialize the map
+    initializeMap();
+</script>
+</body>
+</html>
